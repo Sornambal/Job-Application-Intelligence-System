@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Job Application Intelligence Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="container-fluid">
+        <!-- Navbar -->
+        <nav class="navbar navbar-dark bg-dark sticky-top shadow-sm">
+            <div class="container-fluid">
+                <span class="navbar-brand mb-0 h1">
+                    <i class="bi bi-briefcase-fill"></i> Job Application Intelligence System
+                </span>
+                <div class="nav-item">
+                    <span id="last-updated" class="text-muted small"></span>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Container -->
+        <div class="main-content">
+            <!-- Tab Navigation -->
+            <div class="tab-navigation">
+                <div class="nav nav-tabs" id="dashboardTabs" role="tablist">
+                    <button class="nav-link active" id="dashboard-tab" data-bs-toggle="tab" data-bs-target="#dashboard" type="button" role="tab">
+                        <i class="bi bi-speedometer2"></i> Dashboard
+                    </button>
+                    <button class="nav-link" id="applied-tab" data-bs-toggle="tab" data-bs-target="#applied" type="button" role="tab">
+                        <i class="bi bi-list-check"></i> Applied Jobs
+                    </button>
+                    <button class="nav-link" id="suggestions-tab" data-bs-toggle="tab" data-bs-target="#suggestions" type="button" role="tab">
+                        <i class="bi bi-lightbulb"></i> Suggestions
+                    </button>
+                    <button class="nav-link" id="attention-tab" data-bs-toggle="tab" data-bs-target="#attention" type="button" role="tab">
+                        <i class="bi bi-exclamation-circle"></i> Attention Needed
+                    </button>
+                    <button class="nav-link" id="followups-tab" data-bs-toggle="tab" data-bs-target="#followups" type="button" role="tab">
+                        <i class="bi bi-envelope"></i> Follow-ups
+                    </button>
+                </div>
+            </div>
+
+            <div class="tab-content" id="dashboardTabsContent">
+                <!-- DASHBOARD TAB -->
+                <div class="tab-pane fade show active" id="dashboard" role="tabpanel">
+                    <div class="p-4">
+                        <!-- Stats Cards -->
+                        <div class="row mb-4">
+                            <div class="col-lg-3 col-md-6 mb-3">
+                                <div class="stat-card stat-applied">
+                                    <div class="stat-icon">
+                                        <i class="bi bi-send-fill"></i>
+                                    </div>
+                                    <div class="stat-content">
+                                        <div class="stat-value" id="stat-applied">0</div>
+                                        <div class="stat-label">Total Applied</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-lg-3 col-md-6 mb-3">
+                                <div class="stat-card stat-interview">
+                                    <div class="stat-icon">
+                                        <i class="bi bi-calendar-event"></i>
+                                    </div>
+                                    <div class="stat-content">
+                                        <div class="stat-value" id="stat-interview">0</div>
+                                        <div class="stat-label">Interviews</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-lg-3 col-md-6 mb-3">
+                                <div class="stat-card stat-offer">
+                                    <div class="stat-icon">
+                                        <i class="bi bi-gift-fill"></i>
+                                    </div>
+                                    <div class="stat-content">
+                                        <div class="stat-value" id="stat-offer">0</div>
+                                        <div class="stat-label">Offers</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-lg-3 col-md-6 mb-3">
+                                <div class="stat-card stat-rejected">
+                                    <div class="stat-icon">
+                                        <i class="bi bi-x-circle-fill"></i>
+                                    </div>
+                                    <div class="stat-content">
+                                        <div class="stat-value" id="stat-rejected">0</div>
+                                        <div class="stat-label">Rejected</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Charts Row -->
+                        <div class="row mb-4">
+                            <div class="col-lg-6 mb-3">
+                                <div class="card shadow-sm">
+                                    <div class="card-header bg-primary text-white">
+                                        <h5 class="mb-0"><i class="bi bi-pie-chart"></i> Application Funnel</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <canvas id="funnelChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-lg-6 mb-3">
+                                <div class="card shadow-sm">
+                                    <div class="card-header bg-success text-white">
+                                        <h5 class="mb-0"><i class="bi bi-bar-chart"></i> Status Distribution</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <canvas id="statusChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Analytics Summary -->
+                        <div class="card shadow-sm mb-4">
+                            <div class="card-header bg-info text-white">
+                                <h5 class="mb-0"><i class="bi bi-graph-up"></i> Analytics</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <div class="analytics-item">
+                                            <div class="analytics-label">Success Rate</div>
+                                            <div class="analytics-value" id="analytics-success-rate">0%</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="analytics-item">
+                                            <div class="analytics-label">Conversion to Interview</div>
+                                            <div class="analytics-value" id="analytics-conversion">0%</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="analytics-item">
+                                            <div class="analytics-label">Total Applications</div>
+                                            <div class="analytics-value" id="analytics-total">0</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="analytics-item">
+                                            <div class="analytics-label">Total Offers</div>
+                                            <div class="analytics-value" id="analytics-offers">0</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Recent Updates -->
+                        <div class="card shadow-sm">
+                            <div class="card-header bg-warning text-dark">
+                                <h5 class="mb-0"><i class="bi bi-clock-history"></i> Recent Updates (Last 7 Days)</h5>
+                            </div>
+                            <div class="card-body">
+                                <div id="recent-updates" class="table-responsive">
+                                    <p class="text-muted">Loading...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- APPLIED JOBS TAB -->
+                <div class="tab-pane fade" id="applied" role="tabpanel">
+                    <div class="p-4">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h3><i class="bi bi-list-check"></i> All Applied Jobs</h3>
+                            <button class="btn btn-sm btn-outline-primary" id="refresh-applied">
+                                <i class="bi bi-arrow-clockwise"></i> Refresh
+                            </button>
+                        </div>
+
+                        <div class="card shadow-sm">
+                            <div class="card-body">
+                                <div class="table-responsive" id="applied-jobs-table">
+                                    <p class="text-muted text-center py-4">Loading applied jobs...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SUGGESTIONS TAB -->
+                <div class="tab-pane fade" id="suggestions" role="tabpanel">
+                    <div class="p-4">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h3><i class="bi bi-lightbulb"></i> Job Suggestions</h3>
+                            <button class="btn btn-sm btn-outline-primary" id="refresh-suggestions">
+                                <i class="bi bi-arrow-clockwise"></i> Refresh
+                            </button>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="card bg-light">
+                                    <div class="card-body">
+                                        <h6 class="text-muted">Total Suggestions: <strong id="suggestions-total">0</strong></h6>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card bg-light">
+                                    <div class="card-body">
+                                        <h6 class="text-muted">Saved: <strong id="suggestions-saved">0</strong></h6>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card shadow-sm">
+                            <div class="card-body">
+                                <div class="table-responsive" id="suggestions-table">
+                                    <p class="text-muted text-center py-4">Loading suggestions...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ATTENTION NEEDED TAB -->
+                <div class="tab-pane fade" id="attention" role="tabpanel">
+                    <div class="p-4">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h3><i class="bi bi-exclamation-circle"></i> Jobs Needing Attention</h3>
+                            <button class="btn btn-sm btn-outline-danger" id="refresh-attention">
+                                <i class="bi bi-arrow-clockwise"></i> Refresh
+                            </button>
+                        </div>
+
+                        <div class="card shadow-sm">
+                            <div class="card-body">
+                                <div id="attention-items">
+                                    <p class="text-muted text-center py-4">Loading...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FOLLOW-UPS TAB -->
+                <div class="tab-pane fade" id="followups" role="tabpanel">
+                    <div class="p-4">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h3><i class="bi bi-envelope"></i> Suggested Follow-up Emails</h3>
+                            <button class="btn btn-sm btn-outline-primary" id="refresh-followups">
+                                <i class="bi bi-arrow-clockwise"></i> Refresh
+                            </button>
+                        </div>
+
+                        <div class="card shadow-sm">
+                            <div class="card-body">
+                                <div class="table-responsive" id="followups-table">
+                                    <p class="text-muted text-center py-4">Loading follow-up suggestions...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='dashboard.js') }}"></script>
+</body>
+</html>

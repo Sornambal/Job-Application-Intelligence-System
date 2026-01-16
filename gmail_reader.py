@@ -1,11 +1,32 @@
 import base64
+import pickle
+import os
+import time
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
-import pickle
-import os
 
 SCOPES = ['https://www.googleapis.com/auth/gmail.readonly']
+BASE_QUERY = 'subject:(application OR applied OR interview OR shortlisted OR "thank you for applying" OR offer OR rejection OR rejected)'
+LAST_RUN_FILE = 'last_run.txt'
+
+
+def _load_last_run_epoch():
+    if not os.path.exists(LAST_RUN_FILE):
+        return None
+    try:
+        with open(LAST_RUN_FILE, 'r', encoding='utf-8') as f:
+            return int(float(f.read().strip()))
+    except (ValueError, OSError):
+        return None
+
+
+def _save_last_run_epoch(epoch: float):
+    try:
+        with open(LAST_RUN_FILE, 'w', encoding='utf-8') as f:
+            f.write(str(int(epoch)))
+    except OSError:
+        pass
 
 def get_gmail_service():
     creds = None
@@ -34,17 +55,31 @@ def get_gmail_service():
     return service
 
 
-def read_latest_emails(max_results=5):
+def read_latest_emails(max_results=50, since_last_run=True):
     service = get_gmail_service()
-    query = 'subject:(application OR applied OR interview OR shortlisted OR "thank you for applying" OR offer OR rejection OR rejected)'
-    results = service.users().messages().list(
-        userId='me',
-        q=query,
-        maxResults=max_results).execute()
 
-    messages = results.get('messages', [])
+    # Build Gmail search query; add after:<epoch> to fetch only new mail since last run
+    query = BASE_QUERY
+    last_run_epoch = _load_last_run_epoch() if since_last_run else None
+    if last_run_epoch:
+        query = f"{query} after:{last_run_epoch}"
+
+    messages = []
+    page_token = None
+    while True:
+        results = service.users().messages().list(
+            userId='me',
+            q=query,
+            maxResults=max_results,
+            pageToken=page_token
+        ).execute()
+
+        messages.extend(results.get('messages', []))
+        page_token = results.get('nextPageToken')
+        if not page_token:
+            break
+
     emails = []
-
     for msg in messages:
         txt = service.users().messages().get(
             userId='me', id=msg['id'], format='full').execute()
@@ -72,5 +107,8 @@ def read_latest_emails(max_results=5):
             "sender": sender,
             "body": body
         })
+
+    if since_last_run:
+        _save_last_run_epoch(time.time())
 
     return emails
