@@ -3,6 +3,8 @@
 > **Transform Your Inbox Into an Organized Job Pipeline**
 >
 > An intelligent, production-grade AI agent that reads recruiter emails, tracks applications, validates state transitions, and generates smart follow-ups—so you never miss an opportunity.
+## 🎥 Demo Video
+[Click here to watch the demo video](https://drive.google.com/file/d/1kgLw8IX5AV0WomZ8SqblIcwIAnPe9k53/view?usp=sharing)
 
 ---
 
