@@ -1,0 +1,29 @@
+# Core Dependencies for Job Application Intelligence System
+
+# Gmail API
+google-api-python-client
+google-auth-httplib2
+google-auth-oauthlib
+
+# LLM (Groq)
+groq
+
+# Data Processing
+pandas
+openpyxl
+
+# HTTP Client
+httpx
+
+# Configuration
+python-dotenv
+
+# WhatsApp Notifications (Twilio)
+twilio
+
+# LangGraph Orchestration (NEW)
+langgraph>=0.0.20
+langchain-core>=0.1.0
+
+# Type Checking (for TypedDict)
+typing-extensions>=4.0.0
