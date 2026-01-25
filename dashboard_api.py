@@ -121,6 +121,37 @@ def get_status_breakdown() -> Dict:
     return breakdown
 
 
+def get_jobs_by_status(status: str) -> List[Dict]:
+    """
+    Get all jobs filtered by a specific status (Applied, Interview, Offer, Rejected).
+
+    This function sanitizes records to remove NaN/Infinity so JSON serialization
+    cannot fail on the frontend fetch (previously causing "Unexpected token NaN").
+    """
+    data = get_dashboard_data()
+    records = data.get("records", [])
+
+    filtered: List[Dict] = []
+    for record in records:
+        if record.get("Status") != status:
+            continue
+
+        cleaned = _sanitize_record(record)
+        filtered.append({
+            "Company": cleaned.get("Company", ""),
+            "Role": cleaned.get("Role", ""),
+            "Status": cleaned.get("Status", ""),
+            "Applied_Date": cleaned.get("Applied_Date", ""),
+            "Last_Update": cleaned.get("Last_Update", ""),
+            "Days_Since_Update": int(cleaned.get("Days_Since_Update", 0) or 0),
+            "Recruiter_Email": cleaned.get("Recruiter_Email", ""),
+            "Notes": cleaned.get("Notes", ""),
+            "Link": cleaned.get("Link", ""),
+        })
+
+    return filtered
+
+
 def get_jobs_needing_attention() -> List[Dict]:
     """
     Get jobs that require immediate attention:

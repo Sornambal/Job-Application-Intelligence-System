@@ -3,19 +3,75 @@
 let funnelChart = null;
 let statusChart = null;
 let followupItems = [];
+let appliedJobsData = [];
+let interviewsData = [];
+let offersData = [];
 
 // Initialize dashboard on page load
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOMContentLoaded event fired');
     loadDashboard();
     setLastUpdated();
     
     // Refresh buttons
     document.getElementById('refresh-applied').addEventListener('click', loadAppliedJobs);
+    document.getElementById('refresh-interviews').addEventListener('click', loadInterviews);
+    document.getElementById('refresh-offers').addEventListener('click', loadOffers);
     document.getElementById('refresh-suggestions').addEventListener('click', loadSuggestions);
     document.getElementById('refresh-attention').addEventListener('click', loadAttentionNeeded);
     const followupsRefresh = document.getElementById('refresh-followups');
     if (followupsRefresh) {
         followupsRefresh.addEventListener('click', loadFollowups);
+    }
+    
+    // Applied Jobs Filters
+    document.getElementById('applied-status-filter').addEventListener('change', applyFiltersApplied);
+    document.getElementById('applied-date-filter').addEventListener('change', applyFiltersApplied);
+    document.getElementById('applied-sort-by').addEventListener('change', applyFiltersApplied);
+    document.getElementById('applied-clear-filters').addEventListener('click', clearFiltersApplied);
+    
+    // Interviews Filters
+    document.getElementById('interviews-date-filter').addEventListener('change', applyFiltersInterviews);
+    document.getElementById('interviews-sort-by').addEventListener('change', applyFiltersInterviews);
+    document.getElementById('interviews-clear-filters').addEventListener('click', clearFiltersInterviews);
+    
+    // Offers Filters
+    document.getElementById('offers-date-filter').addEventListener('change', applyFiltersOffers);
+    document.getElementById('offers-sort-by').addEventListener('change', applyFiltersOffers);
+    document.getElementById('offers-clear-filters').addEventListener('click', clearFiltersOffers);
+    
+    // Setup tab event listeners
+    const appliedTab = document.getElementById('applied-tab');
+    console.log('Applied tab element:', appliedTab);
+    if (appliedTab) {
+        appliedTab.addEventListener('shown.bs.tab', function() {
+            console.log('Applied tab shown');
+            loadAppliedJobs();
+        });
+    }
+    
+    const interviewsTab = document.getElementById('interviews-tab');
+    console.log('Interviews tab element:', interviewsTab);
+    if (interviewsTab) {
+        interviewsTab.addEventListener('shown.bs.tab', function() {
+            console.log('Interviews tab shown');
+            loadInterviews();
+        });
+        // Also load on init so data is ready when user clicks
+        console.log('Pre-loading interviews data...');
+        loadInterviews();
+    }
+    
+    const offersTab = document.getElementById('offers-tab');
+    console.log('Offers tab element:', offersTab);
+    if (offersTab) {
+        offersTab.addEventListener('shown.bs.tab', function() {
+            console.log('Offers tab shown');
+            loadOffers();
+        });
+        // Also load on init so data is ready when user clicks
+        console.log('Pre-loading offers data...');
+        loadOffers();
     }
 });
 
@@ -207,10 +263,44 @@ function loadAppliedJobs() {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                displayAppliedJobs(data.data);
+                appliedJobsData = data.data || [];
+                applyFiltersApplied();
             }
         })
         .catch(error => console.error('Error loading applied jobs:', error));
+}
+
+function applyFiltersApplied() {
+    let filtered = [...appliedJobsData];
+    
+    const statusFilter = document.getElementById('applied-status-filter').value;
+    const dateFilter = document.getElementById('applied-date-filter').value;
+    const sortBy = document.getElementById('applied-sort-by').value;
+    
+    // Filter by status
+    if (statusFilter) {
+        filtered = filtered.filter(job => job.Status === statusFilter);
+    }
+    
+    // Filter by date (month/year)
+    if (dateFilter) {
+        filtered = filtered.filter(job => {
+            const jobDate = job.Applied_Date || '';
+            return jobDate.startsWith(dateFilter);
+        });
+    }
+    
+    // Sort
+    filtered = sortJobs(filtered, sortBy);
+    
+    displayAppliedJobs(filtered);
+}
+
+function clearFiltersApplied() {
+    document.getElementById('applied-status-filter').value = '';
+    document.getElementById('applied-date-filter').value = '';
+    document.getElementById('applied-sort-by').value = 'company';
+    applyFiltersApplied();
 }
 
 function displayAppliedJobs(jobs) {
@@ -245,10 +335,23 @@ function displayAppliedJobs(jobs) {
     
     jobs.forEach(job => {
         const badge = `<span class="badge badge-${job.Status.toLowerCase()}">${job.Status}</span>`;
+        
+        // Handle unknown company - use recruiter name
+        let companyDisplay = job.Company;
+        if (!companyDisplay || companyDisplay === 'Unknown' || companyDisplay === '0') {
+            companyDisplay = job.Recruiter_Email ? job.Recruiter_Email.split('@')[0] : 'Unknown';
+        }
+        
+        // Handle unknown role - use default
+        let roleDisplay = job.Role;
+        if (!roleDisplay || roleDisplay === 'Unknown' || roleDisplay === '0') {
+            roleDisplay = 'AI/ML';
+        }
+        
         html += `
             <tr>
-                <td><strong>${job.Company}</strong></td>
-                <td>${job.Role}</td>
+                <td><strong>${companyDisplay}</strong></td>
+                <td>${roleDisplay}</td>
                 <td>${badge}</td>
                 <td><small>${job.Applied_Date || 'N/A'}</small></td>
                 <td><small>${job.Last_Update || 'N/A'}</small></td>
@@ -263,13 +366,271 @@ function displayAppliedJobs(jobs) {
     container.innerHTML = html;
 }
 
-// Load applied jobs on tab click
-document.addEventListener('DOMContentLoaded', function() {
-    const appliedTab = document.getElementById('applied-tab');
-    if (appliedTab) {
-        appliedTab.addEventListener('shown.bs.tab', loadAppliedJobs);
+
+// ============================================================================
+// HELPER FUNCTIONS FOR FILTERING AND SORTING
+// ============================================================================
+
+function sortJobs(jobs, sortBy) {
+    const sorted = [...jobs];
+    
+    switch(sortBy) {
+        case 'company':
+            sorted.sort((a, b) => (a.Company || '').localeCompare(b.Company || ''));
+            break;
+        case 'company-desc':
+            sorted.sort((a, b) => (b.Company || '').localeCompare(a.Company || ''));
+            break;
+        case 'date':
+            sorted.sort((a, b) => new Date(b.Applied_Date || 0) - new Date(a.Applied_Date || 0));
+            break;
+        case 'date-old':
+            sorted.sort((a, b) => new Date(a.Applied_Date || 0) - new Date(b.Applied_Date || 0));
+            break;
+        case 'last-update':
+            sorted.sort((a, b) => new Date(b.Last_Update || 0) - new Date(a.Last_Update || 0));
+            break;
+        case 'days-since':
+            sorted.sort((a, b) => parseInt(b.Days_Since_Update || 0) - parseInt(a.Days_Since_Update || 0));
+            break;
+        default:
+            break;
     }
-});
+    
+    return sorted;
+}
+
+// ============================================================================
+// INTERVIEWS TAB
+// ============================================================================
+
+function loadInterviews() {
+    console.log('loadInterviews called');
+    fetch('/api/interviews')
+        .then(response => {
+            console.log('Interview response status:', response.status);
+            return response.json();
+        })
+        .then(data => {
+            console.log('Interview data:', data);
+            if (data.success) {
+                interviewsData = data.data || [];
+                console.log('Loaded interviews:', interviewsData.length);
+                applyFiltersInterviews();
+            } else {
+                console.error('API returned success=false:', data);
+                displayInterviews([]);
+            }
+        })
+        .catch(error => {
+            console.error('Error loading interviews:', error);
+            displayInterviews([]);
+        });
+}
+
+function applyFiltersInterviews() {
+    let filtered = [...interviewsData];
+    
+    const dateFilter = document.getElementById('interviews-date-filter').value;
+    const sortBy = document.getElementById('interviews-sort-by').value;
+    
+    // Filter by date (month/year)
+    if (dateFilter) {
+        filtered = filtered.filter(job => {
+            const jobDate = job.Last_Update || job.Applied_Date || '';
+            return jobDate.startsWith(dateFilter);
+        });
+    }
+    
+    // Sort
+    filtered = sortJobs(filtered, sortBy);
+    
+    displayInterviews(filtered);
+}
+
+function clearFiltersInterviews() {
+    document.getElementById('interviews-date-filter').value = '';
+    document.getElementById('interviews-sort-by').value = 'company';
+    applyFiltersInterviews();
+}
+
+function displayInterviews(interviews) {
+    const container = document.getElementById('interviews-table');
+    
+    if (!interviews || interviews.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-state-icon">📅</div>
+                <div class="empty-state-text">No interviews yet</div>
+            </div>
+        `;
+        return;
+    }
+    
+    let html = `
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Company</th>
+                    <th>Role</th>
+                    <th>Recruiter / Company Email</th>
+                    <th>Applied Date</th>
+                    <th>Last Update</th>
+                    <th>Days Since</th>
+                    <th>Notes</th>
+                </tr>
+            </thead>
+            <tbody>
+    `;
+    
+    interviews.forEach(job => {
+        const email = job.Recruiter_Email || 'N/A';
+        const emailLink = email !== 'N/A' ? `<a href="mailto:${email}" class="text-decoration-none">${email}</a>` : email;
+        
+        // Handle unknown company - use recruiter name
+        let companyDisplay = job.Company;
+        if (!companyDisplay || companyDisplay === 'Unknown' || companyDisplay === '0') {
+            companyDisplay = job.Recruiter_Email ? job.Recruiter_Email.split('@')[0] : 'Unknown';
+        }
+        
+        // Handle unknown role - use default
+        let roleDisplay = job.Role;
+        if (!roleDisplay || roleDisplay === 'Unknown' || roleDisplay === '0') {
+            roleDisplay = 'AI/ML';
+        }
+        
+        html += `
+            <tr>
+                <td><strong>${companyDisplay}</strong></td>
+                <td>${roleDisplay}</td>
+                <td><small>${emailLink}</small></td>
+                <td><small>${job.Applied_Date || 'N/A'}</small></td>
+                <td><small>${job.Last_Update || 'N/A'}</small></td>
+                <td><small class="text-muted">${job.Days_Since_Update || 0} days</small></td>
+                <td><small>${job.Notes || 'N/A'}</small></td>
+            </tr>
+        `;
+    });
+    
+    html += `</tbody></table>`;
+    container.innerHTML = html;
+}
+
+// ============================================================================
+// OFFERS TAB
+// ============================================================================
+
+function loadOffers() {
+    console.log('loadOffers called');
+    fetch('/api/offers')
+        .then(response => {
+            console.log('Offers response status:', response.status);
+            return response.json();
+        })
+        .then(data => {
+            console.log('Offers data:', data);
+            if (data.success) {
+                offersData = data.data || [];
+                console.log('Loaded offers:', offersData.length);
+                applyFiltersOffers();
+            } else {
+                console.error('API returned success=false:', data);
+                displayOffers([]);
+            }
+        })
+        .catch(error => {
+            console.error('Error loading offers:', error);
+            displayOffers([]);
+        });
+}
+
+function applyFiltersOffers() {
+    let filtered = [...offersData];
+    
+    const dateFilter = document.getElementById('offers-date-filter').value;
+    const sortBy = document.getElementById('offers-sort-by').value;
+    
+    // Filter by date (month/year)
+    if (dateFilter) {
+        filtered = filtered.filter(job => {
+            const jobDate = job.Last_Update || job.Applied_Date || '';
+            return jobDate.startsWith(dateFilter);
+        });
+    }
+    
+    // Sort
+    filtered = sortJobs(filtered, sortBy);
+    
+    displayOffers(filtered);
+}
+
+function clearFiltersOffers() {
+    document.getElementById('offers-date-filter').value = '';
+    document.getElementById('offers-sort-by').value = 'company';
+    applyFiltersOffers();
+}
+
+function displayOffers(offers) {
+    const container = document.getElementById('offers-table');
+    
+    if (!offers || offers.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-state-icon">🎁</div>
+                <div class="empty-state-text">No offers yet</div>
+            </div>
+        `;
+        return;
+    }
+    
+    let html = `
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Company</th>
+                    <th>Role</th>
+                    <th>Recruiter / Company Email</th>
+                    <th>Applied Date</th>
+                    <th>Last Update</th>
+                    <th>Days Since</th>
+                    <th>Notes</th>
+                </tr>
+            </thead>
+            <tbody>
+    `;
+    
+    offers.forEach(job => {
+        const email = job.Recruiter_Email || 'N/A';
+        const emailLink = email !== 'N/A' ? `<a href="mailto:${email}" class="text-decoration-none">${email}</a>` : email;
+        
+        // Handle unknown company - use recruiter name
+        let companyDisplay = job.Company;
+        if (!companyDisplay || companyDisplay === 'Unknown' || companyDisplay === '0') {
+            companyDisplay = job.Recruiter_Email ? job.Recruiter_Email.split('@')[0] : 'Unknown';
+        }
+        
+        // Handle unknown role - use default
+        let roleDisplay = job.Role;
+        if (!roleDisplay || roleDisplay === 'Unknown' || roleDisplay === '0') {
+            roleDisplay = 'AI/ML';
+        }
+        
+        html += `
+            <tr>
+                <td><strong>${companyDisplay}</strong></td>
+                <td>${roleDisplay}</td>
+                <td><small>${emailLink}</small></td>
+                <td><small>${job.Applied_Date || 'N/A'}</small></td>
+                <td><small>${job.Last_Update || 'N/A'}</small></td>
+                <td><small class="text-muted">${job.Days_Since_Update || 0} days</small></td>
+                <td><small>${job.Notes || 'N/A'}</small></td>
+            </tr>
+        `;
+    });
+    
+    html += `</tbody></table>`;
+    container.innerHTML = html;
+}
 
 // ============================================================================
 // SUGGESTIONS TAB

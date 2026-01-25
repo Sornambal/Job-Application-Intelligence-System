@@ -10,7 +10,8 @@ from dashboard_api import (
     get_status_breakdown,
     get_jobs_needing_attention,
     get_analytics_summary,
-    get_followup_suggestions
+    get_followup_suggestions,
+    get_jobs_by_status
 )
 from excel_manager import get_all_suggestions, get_saved_suggestions
 from datetime import datetime
@@ -139,6 +140,36 @@ def api_status_breakdown():
         return jsonify({
             "success": True,
             "data": breakdown
+        })
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route('/api/interviews')
+def api_interviews():
+    """Get all interview stage jobs"""
+    try:
+        interviews = get_jobs_by_status('Interview')
+        
+        return jsonify({
+            "success": True,
+            "data": interviews,
+            "count": len(interviews)
+        })
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route('/api/offers')
+def api_offers():
+    """Get all offer stage jobs"""
+    try:
+        offers = get_jobs_by_status('Offer')
+        
+        return jsonify({
+            "success": True,
+            "data": offers,
+            "count": len(offers)
         })
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500

@@ -34,6 +34,12 @@
                     <button class="nav-link" id="applied-tab" data-bs-toggle="tab" data-bs-target="#applied" type="button" role="tab">
                         <i class="bi bi-list-check"></i> Applied Jobs
                     </button>
+                    <button class="nav-link" id="interviews-tab" data-bs-toggle="tab" data-bs-target="#interviews" type="button" role="tab">
+                        <i class="bi bi-calendar2-event"></i> Interviews
+                    </button>
+                    <button class="nav-link" id="offers-tab" data-bs-toggle="tab" data-bs-target="#offers" type="button" role="tab">
+                        <i class="bi bi-gift-fill"></i> Offers
+                    </button>
                     <button class="nav-link" id="suggestions-tab" data-bs-toggle="tab" data-bs-target="#suggestions" type="button" role="tab">
                         <i class="bi bi-lightbulb"></i> Suggestions
                     </button>
@@ -185,10 +191,145 @@
                             </button>
                         </div>
 
+                        <!-- Filter and Sort Controls -->
+                        <div class="card shadow-sm mb-3">
+                            <div class="card-body">
+                                <div class="row g-3">
+                                    <div class="col-md-3">
+                                        <label class="form-label"><i class="bi bi-funnel"></i> Status Filter</label>
+                                        <select class="form-select" id="applied-status-filter">
+                                            <option value="">All Statuses</option>
+                                            <option value="Applied">Applied</option>
+                                            <option value="Interview">Interviews</option>
+                                            <option value="Offer">Offers</option>
+                                            <option value="Rejected">Rejected</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label"><i class="bi bi-calendar-event"></i> Date Filter</label>
+                                        <input type="month" class="form-control" id="applied-date-filter" placeholder="Select month">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label"><i class="bi bi-arrow-down-up"></i> Sort By</label>
+                                        <select class="form-select" id="applied-sort-by">
+                                            <option value="company">Company (A-Z)</option>
+                                            <option value="company-desc">Company (Z-A)</option>
+                                            <option value="date">Applied Date (Newest)</option>
+                                            <option value="date-old">Applied Date (Oldest)</option>
+                                            <option value="last-update">Last Update (Newest)</option>
+                                            <option value="days-since">Days Since Update (Most)</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label">&nbsp;</label>
+                                        <button class="btn btn-outline-secondary w-100" id="applied-clear-filters">
+                                            <i class="bi bi-arrow-counterclockwise"></i> Clear Filters
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="card shadow-sm">
                             <div class="card-body">
                                 <div class="table-responsive" id="applied-jobs-table">
                                     <p class="text-muted text-center py-4">Loading applied jobs...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- INTERVIEWS TAB -->
+                <div class="tab-pane fade" id="interviews" role="tabpanel">
+                    <div class="p-4">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h3><i class="bi bi-calendar2-event"></i> Interviews</h3>
+                            <button class="btn btn-sm btn-outline-primary" id="refresh-interviews">
+                                <i class="bi bi-arrow-clockwise"></i> Refresh
+                            </button>
+                        </div>
+
+                        <!-- Filter and Sort Controls -->
+                        <div class="card shadow-sm mb-3">
+                            <div class="card-body">
+                                <div class="row g-3">
+                                    <div class="col-md-4">
+                                        <label class="form-label"><i class="bi bi-calendar-event"></i> Date Filter</label>
+                                        <input type="month" class="form-control" id="interviews-date-filter" placeholder="Select month">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label"><i class="bi bi-arrow-down-up"></i> Sort By</label>
+                                        <select class="form-select" id="interviews-sort-by">
+                                            <option value="company">Company (A-Z)</option>
+                                            <option value="company-desc">Company (Z-A)</option>
+                                            <option value="date">Interview Date (Newest)</option>
+                                            <option value="date-old">Interview Date (Oldest)</option>
+                                            <option value="last-update">Last Update (Newest)</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">&nbsp;</label>
+                                        <button class="btn btn-outline-secondary w-100" id="interviews-clear-filters">
+                                            <i class="bi bi-arrow-counterclockwise"></i> Clear Filters
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card shadow-sm">
+                            <div class="card-body">
+                                <div class="table-responsive" id="interviews-table">
+                                    <p class="text-muted text-center py-4">Loading interviews...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- OFFERS TAB -->
+                <div class="tab-pane fade" id="offers" role="tabpanel">
+                    <div class="p-4">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h3><i class="bi bi-gift-fill"></i> Offers</h3>
+                            <button class="btn btn-sm btn-outline-primary" id="refresh-offers">
+                                <i class="bi bi-arrow-clockwise"></i> Refresh
+                            </button>
+                        </div>
+
+                        <!-- Filter and Sort Controls -->
+                        <div class="card shadow-sm mb-3">
+                            <div class="card-body">
+                                <div class="row g-3">
+                                    <div class="col-md-4">
+                                        <label class="form-label"><i class="bi bi-calendar-event"></i> Date Filter</label>
+                                        <input type="month" class="form-control" id="offers-date-filter" placeholder="Select month">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label"><i class="bi bi-arrow-down-up"></i> Sort By</label>
+                                        <select class="form-select" id="offers-sort-by">
+                                            <option value="company">Company (A-Z)</option>
+                                            <option value="company-desc">Company (Z-A)</option>
+                                            <option value="date">Offer Date (Newest)</option>
+                                            <option value="date-old">Offer Date (Oldest)</option>
+                                            <option value="last-update">Last Update (Newest)</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">&nbsp;</label>
+                                        <button class="btn btn-outline-secondary w-100" id="offers-clear-filters">
+                                            <i class="bi bi-arrow-counterclockwise"></i> Clear Filters
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card shadow-sm">
+                            <div class="card-body">
+                                <div class="table-responsive" id="offers-table">
+                                    <p class="text-muted text-center py-4">Loading offers...</p>
                                 </div>
                             </div>
                         </div>
